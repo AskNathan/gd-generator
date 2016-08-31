@@ -24,12 +24,12 @@ import ${import};
 public class ${meta.className} implements Serializable {
 	/* 原生 */
 <#list meta.fields as field>
-	private <#if field.paradigm != ''>${field.type}${field.paradigm} ${field.name}= new ${field.type}();<#else>${field.type} ${field.name};</#if>
+	private <#if field.paradigm != ''>${field.face}${field.paradigm} ${field.name}= new ${field.type}<>();<#else>${field.type} ${field.name};</#if>
 </#list>
 
 	/* 扩展 */
 <#list meta.fields2 as field>
-	private <#if field.paradigm != ''>${field.type}${field.paradigm} ${field.name}= new ${field.type}();<#else>${field.type} ${field.name};</#if>
+	private <#if field.paradigm != ''>${field.face}${field.paradigm} ${field.name}= new ${field.type}<>();<#else>${field.type} ${field.name};</#if>
 </#list>
 
 }

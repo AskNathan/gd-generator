@@ -74,31 +74,33 @@ public class VoHandler extends AbstractHandler {
 					if (meta == null)
 						throw new NullPointerException("group " + group + " 未在类 " + entityClass.getName() + "上声明");
 					final Meta.Field field = new Meta.Field();
+					final Class<?> viewType = view.type();
 					switch (view.elementGroupType()) {
 						case ASSOCIATION:
 							field.type = view.elementGroup();
 							field.name = isNotBlank(view.name()) ? replaceFirstToLower(view.elementGroup()) : view.name();
 							break;
 						case COLLECTION:
-							if (!Collection.class.isAssignableFrom(view.type()))
-								throw new IllegalArgumentException("view type is " + view.type().getName() + " must be collection subclasses");
+							if (!Collection.class.isAssignableFrom(viewType))
+								throw new IllegalArgumentException("view type is " + viewType.getName() + " must be collection subclasses");
 							final String name = view.name();
 							if (isBlank(name))
 								throw new NullPointerException("type is collection ,view name must be not null");
 							field.name = name;
 							field.paradigm = view.elementGroup();
-							field.type = view.type().getSimpleName();
-							addImport(meta, view.type());
+							field.type = viewType.getSimpleName();
+							setInterface(meta, field, viewType);
+							addImport(meta, viewType);
 							break;
 						case SIMPLE:
 							if (isBlank(view.name()))
 								throw new NullPointerException("type is SIMPLE ,view name must be not null");
-							if (view.type() == Object.class)
+							if (viewType == Object.class)
 								throw new NullPointerException("type is SIMPLE ,view type must be not Object");
 							field.name = view.name();
 
-							field.type = view.type().getSimpleName();
-							addImport(meta, view.type());
+							field.type = viewType.getSimpleName();
+							addImport(meta, viewType);
 							break;
 						//throw new UnsupportedOperationException("view class not support SIMPLE");
 						case MAP:
@@ -124,32 +126,36 @@ public class VoHandler extends AbstractHandler {
 						if (meta == null)
 							throw new NullPointerException("group " + group + "未在类 " + entityClass.getName() + "上声明");
 						final Meta.Field field = new Meta.Field();
+						final Class<?> viewType = view.type();
 						switch (view.elementGroupType()) {
-							case ASSOCIATION:
+							case ASSOCIATION: {
 								field.type = view.elementGroup();
 								field.name = isBlank(view.name()) ? replaceFirstToLower(view.elementGroup()) : view.name();
 								meta.fields2.add(field);
 								isAdd = false;
 								break;
-							case COLLECTION:
-								if (!Collection.class.isAssignableFrom(view.type()))
-									throw new IllegalArgumentException("view type is " + view.type().getName() + " must be collection subclasses");
+							}
+							case COLLECTION: {
+								if (!Collection.class.isAssignableFrom(viewType))
+									throw new IllegalArgumentException("view type is " + viewType.getName() + " must be collection subclasses");
 								final String name = view.name();
 								if (isBlank(name))
 									throw new NullPointerException("type is collection ,view name must be not null");
 								field.name = name;
 								field.paradigm = view.elementGroup();
-								field.type = view.type().getSimpleName();
-								addImport(meta, view.type());
+								field.type = viewType.getSimpleName();
+								setInterface(meta, field, viewType);
+								addImport(meta, viewType);
 								meta.fields2.add(field);
 								isAdd = false;
 								break;
-							case SIMPLE:
+							}
+							case SIMPLE: {
 								field.name = isBlank(view.name()) ? replaceFirstToLower(f.getName()) : view.name();
 								final Class<?> type = f.getType();
-								field.type = view.type() == Object.class ? type.getSimpleName() : view.type().getSimpleName();
-								if (view.type() != Object.class) {
-									addImport(meta, view.type());
+								field.type = viewType == Object.class ? type.getSimpleName() : viewType.getSimpleName();
+								if (viewType != Object.class) {
+									addImport(meta, viewType);
 								} else {
 									addImport(meta, type);
 								}
@@ -160,14 +166,16 @@ public class VoHandler extends AbstractHandler {
 								}
 
 								break;
-							case MAP:
-								if (!Map.class.isAssignableFrom(view.type()))
-									throw new IllegalArgumentException("view type is " + view.type().getName() + " must be collection subclasses");
+							}
+							case MAP: {
+								if (!Map.class.isAssignableFrom(viewType))
+									throw new IllegalArgumentException("view type is " + viewType.getName() + " must be collection subclasses");
 
 								if (isBlank(view.name()))
 									throw new NullPointerException("type is collection ,view name must be not null");
 								meta.fields2.add(field);
 								isAdd = false;
+							}
 						}
 						if (isAdd)
 							meta.fields.add(field);
@@ -176,6 +184,16 @@ public class VoHandler extends AbstractHandler {
 
 			}
 			doWrite(result);
+		}
+	}
+
+	private void setInterface(Meta meta, Meta.Field field, Class<?> viewType) {
+		if (Set.class.isAssignableFrom(viewType)) {
+			field.face = "Set";
+			meta.imports2.add(Set.class.getName());
+		} else if (List.class.isAssignableFrom(viewType)) {
+			field.face = "List";
+			meta.imports2.add(List.class.getName());
 		}
 	}
 
@@ -236,6 +254,7 @@ public class VoHandler extends AbstractHandler {
 			private String name;
 			private String paradigm = "";
 			private String type;
+			private String face;
 
 			public String getName() {
 				return name;
@@ -269,6 +288,14 @@ public class VoHandler extends AbstractHandler {
 						", paradigm='" + paradigm + '\'' +
 						", type='" + type + '\'' +
 						'}';
+			}
+
+			public String getFace() {
+				return face;
+			}
+
+			public void setFace(String face) {
+				this.face = face;
 			}
 		}
 
